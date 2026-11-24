@@ -1,1 +1,188 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ULTIMATE AI CLIPS</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#090b12;color:#fff;font-family:Arial,sans-serif}
+header{padding:20px;border-bottom:1px solid #24283a;display:flex;justify-content:space-between;align-items:center}
+.logo{font-size:21px;font-weight:800;color:#9b8cff}
+.logo span{color:#fff}
+.status{font-size:12px;color:#55d99a}
+main{max-width:950px;margin:35px auto;padding:16px}
+h1{font-size:32px;margin-bottom:10px}
+.sub{color:#9ba2b8;line-height:1.6;margin-bottom:28px}
+.panel{background:#121624;border:1px solid #292e42;border-radius:16px;padding:22px;margin-bottom:20px}
+h2{font-size:18px;margin-bottom:17px}
+.upload{border:2px dashed #55517e;border-radius:13px;padding:35px 15px;text-align:center;background:#171a2b}
+.upload input{max-width:100%;margin-top:18px}
+.hint{color:#9299ad;font-size:12px;margin-top:12px}
+label{display:block;color:#c5c9d8;margin:17px 0 8px;font-size:14px}
+select,input[type=number]{width:100%;padding:13px;background:#0c101b;color:#fff;border:1px solid #343950;border-radius:9px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:15px}
+button{border:0;border-radius:10px;padding:15px 20px;background:linear-gradient(100deg,#7658ed,#397eea);color:white;font-size:16px;font-weight:bold;width:100%;margin-top:22px}
+button:disabled{opacity:.5}
+#message{margin-top:18px;color:#b9c1d7;line-height:1.6;overflow-wrap:anywhere}
+#results{margin-top:20px}
+.clip{padding:15px;background:#1b2031;border-radius:10px;margin-top:10px}
+.clip a{color:#a99aff}
+footer{text-align:center;color:#777f94;padding:30px;font-size:12px}
+@media(max-width:600px){h1{font-size:26px}.grid{grid-template-columns:1fr}.panel{padding:17px}}
+</style>
+</head>
+<body>
+<header>
+ <div class="logo">ULTIMATE <span>AI CLIPS</span></div>
+ <div class="status">● AI VIDEO STUDIO</div>
+</header>
+
+<main>
+ <h1>Turn long videos into viral shorts.</h1>
+ <p class="sub">Upload a long video and prepare to create short clips with captions and vertical formatting.</p>
+
+ <section class="panel">
+  <h2>01 — Upload your video</h2>
+  <div class="upload">
+   <div style="font-size:38px">📁</div>
+   <p style="margin-top:10px">Choose your video file</p>
+   <input id="video" type="file" accept="video/*">
+   <p class="hint">Choose a video you own or have permission to use.</p>
+  </div>
+  <div id="fileInfo" class="hint"></div>
+ </section>
+
+ <section class="panel">
+  <h2>02 — Customize your clips</h2>
+  <div class="grid">
+   <div>
+    <label for="duration">Clip duration</label>
+    <select id="duration">
+     <option value="15">15 seconds</option>
+     <option value="30" selected>30 seconds</option>
+     <option value="45">45 seconds</option>
+     <option value="60">60 seconds</option>
+     <option value="90">90 seconds</option>
+    </select>
+   </div>
+   <div>
+    <label for="count">Number of clips</label>
+    <select id="count">
+     <option value="5">5 clips</option>
+     <option value="10" selected>10 clips</option>
+     <option value="15">15 clips</option>
+     <option value="20">20 clips</option>
+     <option value="0">Let AI decide</option>
+    </select>
+   </div>
+   <div>
+    <label for="language">Caption language</label>
+    <select id="language">
+     <option value="auto">Auto detect</option>
+     <option value="hi">Hindi</option>
+     <option value="en">English</option>
+    </select>
+   </div>
+   <div>
+    <label for="format">Video format</label>
+    <select id="format">
+     <option value="9:16">Vertical 9:16</option>
+     <option value="16:9">Landscape 16:9</option>
+     <option value="1:1">Square 1:1</option>
+    </select>
+   </div>
+  </div>
+  <button id="start">✨ GENERATE AI CLIPS</button>
+  <div id="message">Select a video to get started.</div>
+ </section>
+
+ <section class="panel">
+  <h2>03 — Your generated clips</h2>
+  <div id="results">Your clips will appear here after processing.</div>
+ </section>
+</main>
+
+<footer>ULTIMATE AI CLIPS • Video processing backend required</footer>
+
+<script>
+const videoInput = document.getElementById("video");
+const startButton = document.getElementById("start");
+const message = document.getElementById("message");
+const results = document.getElementById("results");
+
+videoInput.addEventListener("change", () => {
+ const file = videoInput.files[0];
+ document.getElementById("fileInfo").textContent = file
+  ? `${file.name} • ${(file.size/1024/1024).toFixed(1)} MB`
+  : "";
+});
+
+startButton.addEventListener("click", async () => {
+ const file = videoInput.files[0];
+
+ if (!file) {
+  message.textContent = "Please select a video first.";
+  return;
+ }
+
+ const data = new FormData();
+ data.append("video", file);
+ data.append("duration", document.getElementById("duration").value);
+ data.append("count", document.getElementById("count").value);
+ data.append("language", document.getElementById("language").value);
+ data.append("format", document.getElementById("format").value);
+
+ startButton.disabled = true;
+ message.textContent = "Connecting to the video-processing backend...";
+ results.textContent = "Waiting for processing results...";
+
+ try {
+  const response = await fetch("/api/process", {
+   method: "POST",
+   body: data
+  });
+
+  if (!response.ok) {
+   throw new Error("Backend returned error: " + response.status);
+  }
+
+  const output = await response.json();
+
+  if (!output.clips || !Array.isArray(output.clips)) {
+   throw new Error("Invalid response from backend.");
+  }
+
+  results.innerHTML = "";
+  output.clips.forEach((clip, index) => {
+   const item = document.createElement("div");
+   item.className = "clip";
+
+   const title = document.createElement("p");
+   title.textContent = "Clip " + (index + 1);
+   item.appendChild(title);
+
+   if (clip.url) {
+    const link = document.createElement("a");
+    link.href = clip.url;
+    link.textContent = "Download clip";
+    link.download = "";
+    item.appendChild(link);
+   }
+
+   results.appendChild(item);
+  });
+
+  message.textContent = "Processing completed.";
+ } catch (error) {
+  message.textContent =
+   "Backend abhi connect nahi hai. Frontend ready hai; next step mein AI processing server connect karenge. Details: " + error.message;
+ } finally {
+  startButton.disabled = false;
+ }
+});
+</script>
+</body>
+      </html>
+
